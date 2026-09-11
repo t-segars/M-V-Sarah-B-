@@ -1,0 +1,8 @@
+{
+  "openItems": [
+    { "id": "1", "task": "Check bilge pumps", "status": "pending" }
+  ],
+  "systemComponents": [
+    { "id": "1", "name": "Main Engine", "status": "operational" }
+  ]
+}
