@@ -39,18 +39,26 @@ const initialHVAC: SystemDetail = {
 
 const initialPlumbing: SystemDetail = {
   description: "The vessel’s water systems begin at the sea chest and branch into cooling, potable, waste, fuel, and deck-service systems.",
-  flowSteps: [],
+  flowSteps: [
+    { stepNum: "", title: "SEA CHEST", subtitle: "" },
+    { stepNum: "", title: "SRC AQUAMATIC 700-1", subtitle: "" },
+    { stepNum: "", title: "FW TANKS", subtitle: "= 1,500 gal total" },
+    { stepNum: "", title: "VFD PRESSURE PUMP", subtitle: "tuned Jun 15 ✓" },
+    { stepNum: "", title: "PEX DISTRIBUTION", subtitle: "" }
+  ],
   specs: [
-    { label: "WASTE", title: "Headhunter MSD", description: "208–230V / 80A, raw water via SCC-25, blackwater via SCC-18. See SCC-21-140-25." },
-    { label: "FUEL", title: "Four design drawings", description: "SCC-14 to -17 are not yet integrated into any as-built. Fuel sender circuits remain undocumented." },
-    { label: "BILGE", title: "As-built from scratch", description: "No bilge system drawing exists in the 33-number design set. MC Marine must produce it to ABYC H-22." }
+    { label: "WASTE", title: "Headhunter MSD", description: "208–230V / 80A, raw water via SCC-25, blackwater via SCC-18. | See SCC-21-140-25 ↗" },
+    { label: "FUEL", title: "Four design drawings", description: "SCC-14 to -17 are not yet integrated into any as-built. Fuel sender circuits remain undocumented. | See open items ↗" },
+    { label: "BILGE", title: "As-built from scratch", description: "No bilge system drawing exists in the 33-number design set. MC Marine must produce it to ABYC H-22. | Critical gap ↗" }
   ],
   schedule: [
     { tag: "Main engines ×3", zone: "3 in branch · Caterpillar", model: "SCC-21-140-21", count: "" },
     { tag: "Generators ×2", zone: "Dedicated 220V/5A · 10–14 GPM", model: "Source set", count: "" },
     { tag: "HVAC chillers", zone: "74 GPM each · raw-water cooled", model: "SCC-21-140-22", count: "" },
     { tag: "Headhunter MSD", zone: "1 in · dedicated 220V/5A · 4 GPM min", model: "SCC-21-140-25", count: "" },
-    { tag: "Watermaker", zone: "3/4 in nylon · 120VAC booster pump", model: "SCC-21-140-26", count: "" }
+    { tag: "Watermaker", zone: "3/4 in nylon · 120VAC booster pump", model: "SCC-21-140-26", count: "" },
+    { tag: "Live well & deckwash", zone: "3/4 in · dedicated 220V/5A each", model: "SCC-21-140-27", count: "" },
+    { tag: "Icemaker", zone: "3/4 in · routing TBC", model: "SCC-21-140-28", count: "" }
   ]
 };
 
@@ -128,7 +136,10 @@ useEffect(() => {
             merged.systems.electrical = initialElectrical;
             needsSave = true;
           }
-
+if (!merged.systems.plumbing?.flowSteps?.length) {
+  merged.systems.plumbing = initialPlumbing;
+  needsSave = true;
+}
           setData(merged);
           if (needsSave) saveToBackend(merged);
         });
