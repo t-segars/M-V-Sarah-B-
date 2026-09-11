@@ -5,6 +5,7 @@ import HVACPage from "./pages/HVAC";
 import PlumbingPage from "./pages/Plumbing";
 import AncillaryPage from "./pages/Ancillary";
 import DrawingsPage from "./pages/Drawings";
+import ElectricalPage from "./pages/Electrical"; // Imported the new page
 
 function Router() {
   return (
@@ -15,6 +16,7 @@ function Router() {
       <Route path="/plumbing" component={PlumbingPage} />
       <Route path="/ancillary" component={AncillaryPage} />
       <Route path="/drawings" component={DrawingsPage} />
+      <Route path="/electrical" component={ElectricalPage} /> {/* Added the route */}
       <Route>404 - Not Found</Route>
     </Switch>
   );
