@@ -26,6 +26,44 @@ type DrawingEntry = {
   pdfUrl: string;
 };
 
+{/* Bulk JSON Google Sheet Importer */}
+<div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "20px", borderRadius: "12px", marginBottom: "30px" }}>
+  <h3 style={{ margin: "0 0 8px 0", color: "#166534", fontSize: "1.1rem" }}>Bulk Update from Google Sheet (JSON)</h3>
+  <p style={{ margin: "0 0 15px 0", color: "#15803d", fontSize: "0.9rem" }}>
+    Export your Google Sheet as a JSON file matching the vessel schema, then upload it here to instantly update all components, specs, schedules, and drawings app-wide.
+  </p>
+  
+  <input 
+    type="file" 
+    accept=".json"
+    onChange={(e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const jsonContent = JSON.parse(event.target?.result as string);
+          const res = await fetch("/api/data", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(jsonContent)
+          });
+          if (res.ok) {
+            alert("Success! App mass-updated from Google Sheet JSON.");
+            window.location.reload();
+          } else {
+            alert("Failed to update server data.");
+          }
+        } catch (err) {
+          alert("Invalid JSON file format.");
+        }
+      };
+      reader.readAsText(file);
+    }}
+    style={{ padding: "8px", background: "#fff", border: "1px solid #d1d5db", borderRadius: "6px" }}
+  />
+</div>
+
 
 // --- SEED DATA FROM MOCKUPS ---
 const initialHVAC: SystemDetail = {
