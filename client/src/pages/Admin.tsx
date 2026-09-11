@@ -16,6 +16,17 @@ type VesselData = {
   systems: { hvac: SystemDetail; electrical: SystemDetail; plumbing: SystemDetail; ancillary: SystemDetail };
 };
 
+type DrawingEntry = {
+  drawingNum: string;
+  title: string;
+  sheets: string;
+  date: string;
+  category: string;
+  equipmentTags: string;
+  pdfUrl: string;
+};
+
+
 // --- SEED DATA FROM MOCKUPS ---
 const initialHVAC: SystemDetail = {
   description: "A hydronic chilled/heated water system: two central Webasto chillers circulate 25% water/glycol to 17 fan-coil air handlers.",
@@ -78,13 +89,14 @@ const initialAncillary: SystemDetail = {
   ]
 };
 
-const initialDrawings = [
-  "SCC-21-140-01 | General Arrangement | 2 sheets | 2022 | Structure / GA",
-  "SCC-21-140-09 | Electrical / Systems Arrangement | 10 sheets | 2022 | Electrical",
-  "SCC-21-140-10 | Electrical / One-Line Diagram | 5 sheets · Rev A | 2022 | Electrical",
-  "SCC-21-140-22 | HVAC System | 3 sheets | 2023 | HVAC",
-  "SCC-21-140-25 | MSD Raw Water / Blackwater | 2 sheets | 2023 | Plumbing"
-];
+const initialDrawings: DrawingEntry[] = [
+  { drawingNum: "SCC-21-140-01", title: "General Arrangement", sheets: "2", date: "2022", category: "Structure / GA", equipmentTags: "General", pdfUrl: "" },
+  { drawingNum: "SCC-21-140-07", title: "Engine Room Arrangement", sheets: "4", date: "2022", category: "ER Layout", equipmentTags: "Engine Room", pdfUrl: "" },
+  { drawingNum: "SCC-21-140-09", title: "Electrical / Systems Arrangement", sheets: "10", date: "2022", category: "Electrical", equipmentTags: "Electrical Backbone", pdfUrl: "" },
+  { drawingNum: "SCC-21-140-10", title: "Electrical / One-Line Diagram", sheets: "5 · Rev A", date: "2022", category: "Electrical", equipmentTags: "Inverters, Generators", pdfUrl: "" },
+  { drawingNum: "SCC-21-140-18", title: "Potable Water System", sheets: "3", date: "2023", category: "Plumbing", equipmentTags: "Fresh-water loop, Sea chest", pdfUrl: "" },
+  { drawingNum: "SCC-21-140-22", title: "HVAC System", sheets: "3", date: "2023", category: "HVAC", equipmentTags: "Chillers, Air handlers", pdfUrl: "" }
+]
 
 const initialElectrical: SystemDetail = {
   description: "Two independent DC worlds, a split-phase AC backbone, and four field-confirmed Victron inverters.",
@@ -121,7 +133,7 @@ export default function AdminPage() {
   const [newFlow, setNewFlow] = useState<FlowStep>({ stepNum: "", title: "", subtitle: "" });
   const [newSpec, setNewSpec] = useState<SpecCard>({ label: "", title: "", description: "" });
   const [newRow, setNewRow] = useState<ScheduleRow>({ tag: "", zone: "", model: "", count: "" });
-  const [newDrawing, setNewDrawing] = useState("");
+  const [newDrawing, setNewDrawing] = useState<DrawingEntry>({ drawingNum: "", title: "", sheets: "", date: "", category: "", equipmentTags: "", pdfUrl: "" });
 
 useEffect(() => {
     if (isAuthenticated) {
@@ -141,6 +153,10 @@ useEffect(() => {
           }
 if (!merged.systems.plumbing?.flowSteps?.length) {
   merged.systems.plumbing = initialPlumbing;
+  needsSave = true;
+}
+if (!merged.drawings || typeof merged.drawings[0] === 'string') {
+  merged.drawings = initialDrawings;
   needsSave = true;
 }
 // Inside your useEffect in Admin.tsx:
@@ -204,21 +220,45 @@ if (!merged.systems.ancillary?.schedule || merged.systems.ancillary.schedule.len
 
       <div style={{ background: "#f9f9f9", padding: "20px", borderRadius: "8px" }}>
         
-        {activeTab === "drawings" ? (
-          <div>
-            <h4>Drawing Register List</h4>
-            <form onSubmit={addDrawing} style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
-              <input placeholder="Document details..." value={newDrawing} onChange={(e)=>setNewDrawing(e.target.value)} style={{flex:1, padding:"8px"}} required/>
-              <button type="submit" style={{padding:"8px"}}>Add Drawing</button>
-            </form>
-            {(data.drawings || []).map((doc, i) => (
-              <div key={i} style={{ display:"flex", justifyContent:"space-between", background:"#fff", padding:"10px", border:"1px solid #ddd", marginBottom:"5px" }}>
-                <span>{doc}</span>
-                <button onClick={() => removeDrawing(i)} style={{ color:"red" }}>X</button>
-              </div>
-            ))}
-          </div>
-        ) : (
+       {activeTab === "drawings" ? (
+  <div>
+    <h4>Drawing Register List</h4>
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      const updated = { ...data, drawings: [...(data.drawings || []), newDrawing] };
+      saveToBackend(updated);
+      setNewDrawing({ drawingNum: "", title: "", sheets: "", date: "", category: "", equipmentTags: "", pdfUrl: "" });
+    }} style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "30px", background: "#fff", padding: "15px", border: "1px solid #ddd" }}>
+      
+      <div style={{ display: "flex", gap: "10px" }}>
+        <input placeholder="Drawing # (e.g. SCC-21-140-01)" value={newDrawing.drawingNum} onChange={(e)=>setNewDrawing({...newDrawing, drawingNum: e.target.value})} style={{flex:1, padding:"8px"}} required/>
+        <input placeholder="Title" value={newDrawing.title} onChange={(e)=>setNewDrawing({...newDrawing, title: e.target.value})} style={{flex:2, padding:"8px"}} required/>
+        <input placeholder="Sheets" value={newDrawing.sheets} onChange={(e)=>setNewDrawing({...newDrawing, sheets: e.target.value})} style={{flex:1, padding:"8px"}} required/>
+        <input placeholder="Date" value={newDrawing.date} onChange={(e)=>setNewDrawing({...newDrawing, date: e.target.value})} style={{flex:1, padding:"8px"}} required/>
+        <input placeholder="Category" value={newDrawing.category} onChange={(e)=>setNewDrawing({...newDrawing, category: e.target.value})} style={{flex:1, padding:"8px"}} required/>
+      </div>
+      <div style={{ display: "flex", gap: "10px" }}>
+        <input placeholder="Equipment Tags (comma separated)" value={newDrawing.equipmentTags} onChange={(e)=>setNewDrawing({...newDrawing, equipmentTags: e.target.value})} style={{flex:2, padding:"8px"}} />
+        <input placeholder="PDF URL / Filename (e.g. /pdfs/SCC-01.pdf)" value={newDrawing.pdfUrl} onChange={(e)=>setNewDrawing({...newDrawing, pdfUrl: e.target.value})} style={{flex:2, padding:"8px"}} />
+        <button type="submit" style={{padding:"8px 16px", background: "#0056b3", color: "#fff", border: "none", cursor: "pointer"}}>Add Drawing</button>
+      </div>
+    </form>
+
+    {/* Display existing drawings */}
+    {(!data.drawings || typeof data.drawings[0] === 'string') ? <p>Database requires reset for new schema.</p> : data.drawings.map((doc, i) => (
+      <div key={i} style={{ display:"flex", justifyContent:"space-between", background:"#fff", padding:"15px", border:"1px solid #ddd", marginBottom:"5px" }}>
+        <div>
+          <strong>{doc.drawingNum}</strong> - {doc.title} ({doc.category}) <br/>
+          <small style={{ color: "#666" }}>Tags: {doc.equipmentTags || "None"} | PDF: {doc.pdfUrl || "None"}</small>
+        </div>
+        <button onClick={() => {
+          const updated = { ...data, drawings: data.drawings.filter((_, idx) => idx !== i) };
+          saveToBackend(updated);
+        }} style={{ color:"red", alignSelf: "center", border: "none", background: "none", cursor: "pointer" }}>X</button>
+      </div>
+    ))}
+  </div>
+) : (
           <>
             <div style={{ marginBottom: "30px" }}>
               <h4>System Description</h4>
