@@ -68,10 +68,13 @@ const initialAncillary: SystemDetail = {
   specs: [],
   schedule: [
     { tag: "Sea chest", zone: "Electrical pump power · HVAC chiller cooling · Plumbing with 9 consumers", model: "AS-BUILT NOT STARTED", count: "" },
-    { tag: "Bow thruster · VETUS", zone: "48VDC bank · tunnel at frames 25–27", model: "VIP CLOSEOUT", count: "" },
+    { tag: "Bow thruster · VETUS BOWB320", zone: "48VDC bank · tunnel at frames 25–27", model: "VIP CLOSEOUT", count: "" },
     { tag: "Hamilton jets ×3", zone: "Actuators, helm controls · hull penetrations", model: "WIRING UNDOCUMENTED", count: "" },
     { tag: "Seakeeper 35", zone: "230VAC high-draw · 12V battery · raw water", model: "12V CIRCUIT OPEN", count: "" },
-    { tag: "Windlass · Maxwell", zone: "Electrical only", model: "MANUAL COMPLETE", count: "" }
+    { tag: "Windlass · Maxwell 560 V2", zone: "Electrical only", model: "MANUAL COMPLETE", count: "" },
+    { tag: "Davit crane · Steelhead", zone: "24VDC / 208A · drip-tray drain", model: "DRAIN TBD", count: "" },
+    { tag: "Fire suppression", zone: "All three trades · cable path", model: "DEFERRED", count: "" },
+    { tag: "Systems & network cable paths", zone: "NMEA, WiFi, entertainment, ER-to-helm/hardtop, fire suppression", model: "G-NEW", count: "" }
   ]
 };
 
@@ -138,6 +141,11 @@ useEffect(() => {
           }
 if (!merged.systems.plumbing?.flowSteps?.length) {
   merged.systems.plumbing = initialPlumbing;
+  needsSave = true;
+}
+// Inside your useEffect in Admin.tsx:
+if (!merged.systems.ancillary?.schedule || merged.systems.ancillary.schedule.length < 8) {
+  merged.systems.ancillary = initialAncillary;
   needsSave = true;
 }
           setData(merged);
