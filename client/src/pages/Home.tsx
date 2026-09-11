@@ -1,119 +1,289 @@
 import { useState, useEffect } from "react";
 
 export default function Home() {
-  const [openItemsCount, setOpenItemsCount] = useState(6);
+  const [counts, setCounts] = useState({
+    devices: 76,
+    drawings: 32,
+    critical: 8,
+    inProgress: 14,
+    openItemsCount: 6,
+  });
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [openItems, setOpenItems] = useState<string[]>([
+    "Sea Chest",
+    "Electronics & Navigation Package",
+    "Hamilton Jet Drives (x3)",
+    "Main Engines (2x Caterpillar)",
+    "Bilge Pump System"
+  ]);
 
   useEffect(() => {
     fetch("/api/data")
       .then((res) => res.json())
       .then((data) => {
-        if (data.openItems) setOpenItemsCount(data.openItems.length);
+        if (data.openItems && data.openItems.length > 0) {
+          setOpenItems(data.openItems);
+          setCounts((prev) => ({ ...prev, critical: data.openItems.length, openItemsCount: data.openItems.length }));
+        }
       })
       .catch(() => {});
   }, []);
 
+  // Handle search bar keyboard navigation / quick routing
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const query = searchQuery.toLowerCase().trim();
+    if (query.includes("hvac")) window.location.href = "/hvac";
+    else if (query.includes("electric") || query.includes("power")) window.location.href = "/electrical";
+    else if (query.includes("plumb") || query.includes("water")) window.location.href = "/plumbing";
+    else if (query.includes("ancill") || query.includes("cross")) window.location.href = "/ancillary";
+    else if (query.includes("draw") || query.includes("pdf")) window.location.href = "/drawings";
+    else if (query.includes("admin")) window.location.href = "/admin";
+  };
+
+  const filteredItems = openItems.filter(item => item.toLowerCase().includes(searchQuery.toLowerCase()));
+
   return (
-    <div style={{ display: "flex", height: "100vh", fontFamily: "sans-serif", background: "#f8fafc" }}>
+    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "sans-serif", background: "#f8f9fc", color: "#1e293b" }}>
       
-      {/* LEFT SIDEBAR NAVIGATION */}
-      <div style={{ width: "280px", background: "#0b1329", color: "#fff", display: "flex", flexDirection: "column", padding: "20px", boxSizing: "border-box", borderRight: "1px solid #1e293b" }}>
+      {/* SIDEBAR */}
+      <div style={{ width: "260px", background: "#080e1e", color: "#94a3b8", display: "flex", flexDirection: "column", padding: "20px 15px", boxSizing: "border-box", flexShrink: 0 }}>
         
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "30px", borderBottom: "1px solid #1e293b", paddingBottom: "15px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{ width: "32px", height: "32px", border: "1px solid #d4af37", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "#d4af37" }}>
-              ⚓
-            </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "30px", paddingBottom: "15px", borderBottom: "1px solid #1e293b" }}>
+          <div style={{ width: "28px", height: "28px", background: "#1e293b", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", color: "#f59e0b", fontWeight: "bold" }}>⚓</div>
+          <div>
+            <div style={{ fontSize: "9px", color: "#64748b", letterSpacing: "0.5px" }}>MC MARINE SERVICES</div>
+            <div style={{ fontSize: "14px", fontWeight: "bold", color: "#fff" }}>M/V Sarah B</div>
+          </div>
+        </div>
+
+        <div style={{ fontSize: "10px", color: "#64748b", letterSpacing: "1px", marginBottom: "10px", paddingLeft: "10px" }}>SYSTEMS</div>
+        
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1 }}>
+          <a href="/" style={{ display: "flex", alignItems: "center", padding: "10px 12px", borderRadius: "8px", background: "#d97706", color: "#fff", textDecoration: "none", fontWeight: "bold", fontSize: "13px" }}>
+            <span>⊞ Dashboard</span>
+          </a>
+          <div style={{ fontSize: "10px", color: "#64748b", letterSpacing: "1px", margin: "15px 0 5px 10px" }}>QUICK ACCESS</div>
+          <a href="/electrical" style={{ display: "flex", alignItems: "center", padding: "9px 12px", borderRadius: "8px", color: "#cbd5e1", textDecoration: "none", fontSize: "13px" }}>⚡ Electrical</a>
+          <a href="/hvac" style={{ display: "flex", alignItems: "center", padding: "9px 12px", borderRadius: "8px", color: "#cbd5e1", textDecoration: "none", fontSize: "13px" }}>🌡️ HVAC</a>
+          <a href="/plumbing" style={{ display: "flex", alignItems: "center", padding: "9px 12px", borderRadius: "8px", color: "#cbd5e1", textDecoration: "none", fontSize: "13px" }}>💧 Plumbing</a>
+          <a href="/ancillary" style={{ display: "flex", alignItems: "center", padding: "9px 12px", borderRadius: "8px", color: "#cbd5e1", textDecoration: "none", fontSize: "13px" }}>⚙️ Ancillary</a>
+          <a href="/drawings" style={{ display: "flex", alignItems: "center", padding: "9px 12px", borderRadius: "8px", color: "#cbd5e1", textDecoration: "none", fontSize: "13px" }}>📐 Drawings</a>
+          
+          <a href="/admin" style={{ display: "flex", alignItems: "center", padding: "9px 12px", borderRadius: "8px", color: "#f59e0b", textDecoration: "none", fontSize: "13px", marginTop: "20px", border: "1px dashed #334155" }}>
+            ⚙️ Admin Portal
+          </a>
+        </div>
+
+        <div style={{ fontSize: "10px", color: "#475569", borderTop: "1px solid #1e293b", paddingTop: "15px" }}>
+          <div>Systems Dashboard</div>
+          <div>Knowledge base v13</div>
+        </div>
+      </div>
+
+      {/* MAIN CONTENT AREA */}
+      <div style={{ flex: 1, padding: "35px 45px", overflowY: "auto" }}>
+        
+        {/* TOP HEADER WITH FUNCTIONAL SEARCH BAR */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
+          <div>
+            <div style={{ fontSize: "11px", color: "#64748b", letterSpacing: "0.5px", marginBottom: "4px" }}>VESSEL SYSTEMS DASHBOARD</div>
+            <h1 style={{ fontSize: "2rem", margin: "0 0 8px 0", color: "#0f172a", fontWeight: "800" }}>M/V Sarah B</h1>
+            <p style={{ fontSize: "0.95rem", color: "#64748b", maxWidth: "650px", margin: 0, lineHeight: "1.5" }}>
+              A living registry of every tagged system aboard — browse by category, search any device, and pull up its specs, manuals, how-to guides, and maintenance history.
+            </p>
+          </div>
+
+          {/* Functional Search Bar Form */}
+          <form onSubmit={handleSearchSubmit} style={{ position: "relative", width: "300px" }}>
+            <input 
+              type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search the manual... (e.g. hvac, electrical)" 
+              style={{
+                width: "100%",
+                padding: "10px 14px 10px 36px",
+                borderRadius: "8px",
+                border: "1px solid #cbd5e1",
+                background: "#fff",
+                fontSize: "13px",
+                outline: "none",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+                boxSizing: "border-box"
+              }}
+            />
+            <span style={{ position: "absolute", left: "12px", top: "11px", color: "#94a3b8", fontSize: "14px" }}>🔍</span>
+          </form>
+        </div>
+
+        {/* TOP METRIC CARDS */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "15px", marginBottom: "25px" }}>
+          <div style={{ background: "#fff", padding: "18px", borderRadius: "10px", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", gap: "15px", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+            <div style={{ background: "#0f172a", color: "#fff", width: "36px", height: "36px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>⚡</div>
             <div>
-              <div style={{ fontSize: "10px", color: "#94a3b8", letterSpacing: "1px" }}>OWNER'S MANUAL</div>
-              <div style={{ fontSize: "16px", fontWeight: "bold", color: "#fff" }}>M/V Sarah B</div>
+              <div style={{ fontSize: "1.3rem", fontWeight: "bold", color: "#0f172a" }}>{counts.devices}</div>
+              <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase" }}>Devices Logged</div>
+            </div>
+          </div>
+
+          <div style={{ background: "#fff", padding: "18px", borderRadius: "10px", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", gap: "15px", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+            <div style={{ background: "#d97706", color: "#fff", width: "36px", height: "36px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>📐</div>
+            <div>
+              <div style={{ fontSize: "1.3rem", fontWeight: "bold", color: "#0f172a" }}>{counts.drawings}</div>
+              <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase" }}>Drawings</div>
+            </div>
+          </div>
+
+          <div style={{ background: "#fff", padding: "18px", borderRadius: "10px", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", gap: "15px", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+            <div style={{ background: "#dc2626", color: "#fff", width: "36px", height: "36px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>⚠️</div>
+            <div>
+              <div style={{ fontSize: "1.3rem", fontWeight: "bold", color: "#0f172a" }}>{counts.critical}</div>
+              <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase" }}>Critical Items</div>
+            </div>
+          </div>
+
+          <div style={{ background: "#fff", padding: "18px", borderRadius: "10px", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", gap: "15px", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+            <div style={{ background: "#ea580c", color: "#fff", width: "36px", height: "36px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>⏳</div>
+            <div>
+              <div style={{ fontSize: "1.3rem", fontWeight: "bold", color: "#0f172a" }}>{counts.inProgress}</div>
+              <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase" }}>In Progress</div>
             </div>
           </div>
         </div>
 
-        <div style={{ fontSize: "11px", color: "#64748b", letterSpacing: "1px", marginBottom: "15px" }}>VESSEL SYSTEMS</div>
-
-        {/* Nav Items */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
-          <a href="/" style={{ display: "flex", alignItems: "center", padding: "12px 14px", borderRadius: "10px", background: "#1e293b", color: "#fff", textDecoration: "none" }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: "bold", fontSize: "14px", color: "#d4af37" }}>Overview</div>
-              <div style={{ fontSize: "11px", color: "#94a3b8" }}>Start here</div>
+        {/* VESSEL PROFILE & STEERING ROW */}
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1.2fr", gap: "20px", marginBottom: "25px" }}>
+          
+          <div style={{ background: "#0f172a", color: "#fff", borderRadius: "12px", padding: "22px", boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}>
+            <div style={{ fontSize: "11px", color: "#94a3b8", letterSpacing: "1px", marginBottom: "6px" }}>VESSEL PROFILE</div>
+            <div style={{ fontSize: "14px", fontWeight: "bold", color: "#f8fafc", marginBottom: "18px" }}>SCC Marine LLC · Stuart Chatsworth · Fort Myers, FL</div>
+            
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "15px", borderTop: "1px solid #1e293b", paddingTop: "15px" }}>
+              <div>
+                <div style={{ fontSize: "10px", color: "#94a3b8" }}>LOA</div>
+                <div style={{ fontSize: "14px", fontWeight: "bold" }}>23.78 m</div>
+                <div style={{ fontSize: "10px", color: "#64748b" }}>78 ft</div>
+              </div>
+              <div>
+                <div style={{ fontSize: "10px", color: "#94a3b8" }}>BEAM</div>
+                <div style={{ fontSize: "14px", fontWeight: "bold" }}>7.00 m</div>
+              </div>
+              <div>
+                <div style={{ fontSize: "10px", color: "#94a3b8" }}>DRAFT</div>
+                <div style={{ fontSize: "14px", fontWeight: "bold" }}>0.915 m</div>
+              </div>
+              <div>
+                <div style={{ fontSize: "10px", color: "#94a3b8" }}>DISPLACEMENT</div>
+                <div style={{ fontSize: "14px", fontWeight: "bold" }}>57.700 kg</div>
+              </div>
+              <div>
+                <div style={{ fontSize: "10px", color: "#94a3b8" }}>HULL</div>
+                <div style={{ fontSize: "14px", fontWeight: "bold" }}>Aluminum Deep V</div>
+              </div>
+              <div>
+                <div style={{ fontSize: "10px", color: "#94a3b8" }}>POWER</div>
+                <div style={{ fontSize: "14px", fontWeight: "bold" }}>3 × Cat + 3 × Hamilton</div>
+              </div>
             </div>
-            <span>›</span>
-          </a>
+          </div>
 
-          <a href="/electrical" style={{ display: "flex", alignItems: "center", padding: "12px 14px", borderRadius: "10px", color: "#cbd5e1", textDecoration: "none" }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: "bold", fontSize: "14px" }}>Electrical</div>
-              <div style={{ fontSize: "11px", color: "#64748b" }}>Power plant</div>
-            </div>
-          </a>
+          <div style={{ background: "#fff", borderRadius: "12px", padding: "22px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+            <div style={{ fontSize: "11px", color: "#64748b", letterSpacing: "1px", marginBottom: "10px", fontWeight: "bold" }}>STABILIZATION & STEERING</div>
+            <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "13px", color: "#334155", lineHeight: "1.7" }}>
+              <li><strong>Seakeeper 35</strong> gyrostabilizer</li>
+              <li><strong>3x Hamilton Jets</strong> — no shafts, no rudders</li>
+              <li><strong>Bow thruster</strong> as-built undocumented critical before VIP closeout</li>
+            </ul>
+          </div>
 
-          <a href="/hvac" style={{ display: "flex", alignItems: "center", padding: "12px 14px", borderRadius: "10px", color: "#cbd5e1", textDecoration: "none" }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: "bold", fontSize: "14px" }}>HVAC</div>
-              <div style={{ fontSize: "11px", color: "#64748b" }}>Comfort systems</div>
-            </div>
-          </a>
-
-          <a href="/plumbing" style={{ display: "flex", alignItems: "center", padding: "12px 14px", borderRadius: "10px", color: "#cbd5e1", textDecoration: "none" }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: "bold", fontSize: "14px" }}>Plumbing</div>
-              <div style={{ fontSize: "11px", color: "#64748b" }}>Water & waste</div>
-            </div>
-          </a>
-
-          <a href="/ancillary" style={{ display: "flex", alignItems: "center", padding: "12px 14px", borderRadius: "10px", color: "#cbd5e1", textDecoration: "none" }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: "bold", fontSize: "14px" }}>Ancillary</div>
-              <div style={{ fontSize: "11px", color: "#64748b" }}>Cross-system</div>
-            </div>
-          </a>
-
-          <a href="/drawings" style={{ display: "flex", alignItems: "center", padding: "12px 14px", borderRadius: "10px", color: "#cbd5e1", textDecoration: "none" }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: "bold", fontSize: "14px" }}>Drawings</div>
-              <div style={{ fontSize: "11px", color: "#64748b" }}>Design register</div>
-            </div>
-          </a>
-
-          <a href="/admin" style={{ display: "flex", alignItems: "center", padding: "12px 14px", borderRadius: "10px", color: "#d4af37", textDecoration: "none", marginTop: "auto", border: "1px dashed #334155" }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: "bold", fontSize: "14px" }}>Admin Portal ⚙️</div>
-              <div style={{ fontSize: "11px", color: "#94a3b8" }}>Manage vessel data</div>
-            </div>
-          </a>
         </div>
 
-      </div>
-
-      {/* MAIN CONTENT AREA */}
-      <div style={{ flex: 1, padding: "50px", overflowY: "auto" }}>
-        <p style={{ color: "#888", fontSize: "12px", letterSpacing: "1px", margin: 0 }}>SYSTEM 00 · WELCOME</p>
-        <h1 style={{ fontSize: "3rem", margin: "10px 0 20px 0", color: "#0f172a" }}>M/V Sarah B</h1>
-        <p style={{ fontSize: "1.2rem", color: "#475569", lineHeight: "1.6", maxWidth: "700px", marginBottom: "40px" }}>
-          Welcome to the custom digital owner's manual. Use the sidebar on the left to navigate through electrical, HVAC, plumbing, cross-system ancillary equipment, and the complete engineering drawing register.
-        </p>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px", maxWidth: "900px" }}>
-          <a href="/electrical" style={{ background: "#fff", padding: "24px", borderRadius: "12px", border: "1px solid #e2e8f0", textDecoration: "none", color: "inherit", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-            <h3 style={{ margin: "0 0 8px 0", color: "#0f172a" }}>Electrical System →</h3>
-            <p style={{ margin: 0, color: "#64748b", fontSize: "0.95rem" }}>View split-phase house power, Victron inverters, and the panel register.</p>
-          </a>
-          <a href="/hvac" style={{ background: "#fff", padding: "24px", borderRadius: "12px", border: "1px solid #e2e8f0", textDecoration: "none", color: "inherit", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-            <h3 style={{ margin: "0 0 8px 0", color: "#0f172a" }}>HVAC System →</h3>
-            <p style={{ margin: 0, color: "#64748b", fontSize: "0.95rem" }}>Explore Webasto chillers, glycol loops, and the 17-unit air handler schedule.</p>
-          </a>
-          <a href="/plumbing" style={{ background: "#fff", padding: "24px", borderRadius: "12px", border: "1px solid #e2e8f0", textDecoration: "none", color: "inherit", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-            <h3 style={{ margin: "0 0 8px 0", color: "#0f172a" }}>Plumbing & Waste →</h3>
-            <p style={{ margin: 0, color: "#64748b", fontSize: "0.95rem" }}>Inspect sea chest branches, fresh-water loops, and raw-water consumers.</p>
-          </a>
-          <a href="/drawings" style={{ background: "#fff", padding: "24px", borderRadius: "12px", border: "1px solid #e2e8f0", textDecoration: "none", color: "inherit", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
-            <h3 style={{ margin: "0 0 8px 0", color: "#0f172a" }}>Drawings Register →</h3>
-            <p style={{ margin: 0, color: "#64748b", fontSize: "0.95rem" }}>Access the complete SCC-21-140 drawing set and revision rules.</p>
-          </a>
+        {/* BROWSE BY SYSTEM */}
+        <div style={{ marginBottom: "25px" }}>
+          <div style={{ fontSize: "11px", color: "#64748b", letterSpacing: "1px", marginBottom: "12px", fontWeight: "bold" }}>BROWSE BY SYSTEM</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "15px" }}>
+            <a href="/electrical" style={{ background: "#fff", padding: "18px", borderRadius: "10px", border: "1px solid #e2e8f0", textDecoration: "none", color: "inherit", boxShadow: "0 1px 2px rgba(0,0,0,0.02)" }}>
+              <div style={{ fontSize: "18px", marginBottom: "8px" }}>⚡</div>
+              <div style={{ fontWeight: "bold", fontSize: "14px", color: "#0f172a" }}>Electrical</div>
+              <div style={{ fontSize: "11px", color: "#64748b" }}>12 docus</div>
+            </a>
+            <a href="/hvac" style={{ background: "#fff", padding: "18px", borderRadius: "10px", border: "1px solid #e2e8f0", textDecoration: "none", color: "inherit", boxShadow: "0 1px 2px rgba(0,0,0,0.02)" }}>
+              <div style={{ fontSize: "18px", marginBottom: "8px" }}>🌡️</div>
+              <div style={{ fontWeight: "bold", fontSize: "14px", color: "#0f172a" }}>HVAC</div>
+              <div style={{ fontSize: "11px", color: "#64748b" }}>22 docus</div>
+            </a>
+            <a href="/plumbing" style={{ background: "#fff", padding: "18px", borderRadius: "10px", border: "1px solid #e2e8f0", textDecoration: "none", color: "inherit", boxShadow: "0 1px 2px rgba(0,0,0,0.02)" }}>
+              <div style={{ fontSize: "18px", marginBottom: "8px" }}>💧</div>
+              <div style={{ fontWeight: "bold", fontSize: "14px", color: "#0f172a" }}>Plumbing</div>
+              <div style={{ fontSize: "11px", color: "#64748b", textTransform: "lowercase" }}>14 docus</div>
+            </a>
+            <a href="/electrical" style={{ background: "#fff", padding: "18px", borderRadius: "10px", border: "1px solid #e2e8f0", textDecoration: "none", color: "inherit", boxShadow: "0 1px 2px rgba(0,0,0,0.02)" }}>
+              <div style={{ fontSize: "18px", marginBottom: "8px" }}>⚓</div>
+              <div style={{ fontWeight: "bold", fontSize: "14px", color: "#0f172a" }}>Propulsion</div>
+              <div style={{ fontSize: "11px", color: "#64748b" }}>8 docus</div>
+            </a>
+            <a href="/ancillary" style={{ background: "#fff", padding: "18px", borderRadius: "10px", border: "1px solid #e2e8f0", textDecoration: "none", color: "inherit", boxShadow: "0 1px 2px rgba(0,0,0,0.02)" }}>
+              <div style={{ fontSize: "18px", marginBottom: "8px" }}>⚙️</div>
+              <div style={{ fontWeight: "bold", fontSize: "14px", color: "#0f172a" }}>Ancillary</div>
+              <div style={{ fontSize: "11px", color: "#64748b" }}>4 docus</div>
+            </a>
+          </div>
         </div>
+
+        {/* CRITICAL ATTENTION & RECENT ACTIVITY */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+          
+          <div style={{ background: "#fff", borderRadius: "12px", padding: "22px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+              <div style={{ fontWeight: "bold", fontSize: "14px", color: "#0f172a" }}>Critical Attention</div>
+              <div style={{ fontSize: "11px", color: "#64748b" }}>{filteredItems.length} items →</div>
+            </div>
+            
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px" }}>
+              {filteredItems.length === 0 && <div style={{ color: "#94a3b8", fontSize: "12px" }}>No matching critical items found.</div>}
+              {filteredItems.map((item, idx) => (
+                <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "8px", borderBottom: "1px solid #f1f5f9" }}>
+                  <span style={{ color: "#dc2626", marginRight: "10px" }}>●</span>
+                  <span style={{ flex: 1, fontWeight: "500" }}>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ background: "#fff", borderRadius: "12px", padding: "22px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+            <div style={{ fontWeight: "bold", fontSize: "14px", color: "#0f172a", marginBottom: "15px" }}>Recent Activity</div>
+            
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px", fontSize: "12px", color: "#334155", lineHeight: "1.4" }}>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <span style={{ color: "#16a34a" }}>✓</span>
+                <div>
+                  <div>42-day Ganti window begins (Aug 10 - Sep 23). Target: Gate 1 (low Ready / Heat List). Chiller system test week Sep 14-18.</div>
+                  <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "2px" }}>2026-08-10 · Field verification</div>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "10px" }}>
+                <span style={{ color: "#16a34a" }}>✓</span>
+                <div>
+                  <div>Davit crane documented in electrical takeoff — DC 1 circuit 3 24VDC 208A breaker. Matches brown 208A peak spec.</div>
+                  <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "2px" }}>2026-07-30 · Takeoff update</div>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "10px" }}>
+                <span style={{ color: "#16a34a" }}>✓</span>
+                <div>
+                  <div>Lift station count confirmed: 4 total (2 LH, 2 CC). Headhunter nameplate and switch/cover plate photos documented. Alarm wiring...</div>
+                  <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "2px" }}>2026-07-12 · Field audit</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
       </div>
 
     </div>
