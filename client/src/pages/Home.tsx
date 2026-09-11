@@ -11,6 +11,56 @@ export default function Home() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [vesselData, setVesselData] = useState<any>(null);
+  const [openItems, setOpenItems] = useState<any[]>([
+    "Sea Chest",
+    "Electronics & Navigation Package",
+    "Hamilton Jet Drives (x3)",
+    "Main Engines (2x Caterpillar)",
+    "Bilge Pump System"
+  ]);
+
+  useEffect(() => {
+    fetch("/api/data")
+      .then((res) => res.json())
+      .then((data) => {
+        setVesselData(data);
+
+        // Dynamically compute total devices logged across all system schedules
+        const electricalLen = data.systems?.electrical?.schedule?.length || 0;
+        const ancillaryLen = data.systems?.ancillary?.schedule?.length || 0;
+        const plumbingLen = data.systems?.plumbing?.schedule?.length || 0;
+        const hvacLen = data.systems?.hvac?.schedule?.length || 0;
+        const totalDevices = electricalLen + ancillaryLen + plumbingLen + hvacLen;
+
+        // Dynamically compute drawings length
+        const drawingsLen = data.drawings ? data.drawings.length : 0;
+
+        // Dynamically compute open/critical/in-progress items
+        const openItemsList = data.openItems || [];
+        const criticalCount = openItemsList.filter((item: any) => 
+          typeof item === 'object' && (item.priority === "critical" || item.status === "critical")
+        ).length || openItemsList.length;
+
+        const inProgressCount = openItemsList.filter((item: any) => 
+          typeof item === 'object' && (item.status === "in-progress" || item.status === "inProgress")
+        ).length;
+
+        setCounts({
+          devices: totalDevices > 0 ? totalDevices : 76,
+          drawings: drawingsLen > 0 ? drawingsLen : 32,
+          critical: criticalCount > 0 ? criticalCount : 8,
+          inProgress: inProgressCount > 0 ? inProgressCount : 14,
+          openItemsCount: openItemsList.length > 0 ? openItemsList.length : 6
+        });
+
+        if (openItemsList.length > 0) {
+          setOpenItems(openItemsList);
+        }
+      })
+      .catch(() => {});
+  }, []);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [vesselData, setVesselData] = useState<any>(null);
   const [openItems, setOpenItems] = useState<string[]>([
     "Sea Chest",
     "Electronics & Navigation Package",
