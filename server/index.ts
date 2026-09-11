@@ -151,3 +151,56 @@ async function startServer() {
         vesselData.systems.electrical.schedule = panelRows
           .filter((row: any) => row.TAG && row.Location)
           .map((row: any) => ({
+            tag: `${row.TAG} · ${row.PANEL || "Main"}`,
+            zone: `${row.Location} (Source: ${row.Source || "N/A"})`,
+            model: `Voltage: ${row.Voltage || "TBC"} | Breaker: ${row["Amp Breaker"] || "TBC"}`,
+            count: ""
+          }));
+      }
+
+      // Parse NetWorks sheet into Ancillary Schedule
+      if (workbook.Sheets["NetWorks"]) {
+        const netRows: any[] = XLSX.utils.sheet_to_json(workbook.Sheets["NetWorks"], { range: 1 });
+        vesselData.systems.ancillary.schedule = netRows
+          .filter((row: any) => row.TAG)
+          .map((row: any) => ({
+            tag: `${row.Device || "Device"} · ${row.TAG}`,
+            zone: `Network: ${row.Network || "N/A"} | Instrument: ${row.Instrument || "Standard"}`,
+            model: "TAKEOFF IMPORT",
+            count: ""
+          }));
+      }
+
+      fs.writeFileSync(dataFilePath, JSON.stringify(vesselData, null, 2));
+      
+      // Cleanup uploaded temp file
+      fs.unlinkSync(req.file.path);
+
+      res.json({ success: true, message: "Excel takeoff successfully parsed and integrated!" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Failed to parse Excel file." });
+    }
+  });
+
+  // Serve static files from dist/public in production
+  const staticPath =
+    process.env.NODE_ENV === "production"
+      ? path.resolve(__dirname, "public")
+      : path.resolve(__dirname, "..", "dist", "public");
+
+  app.use(express.static(staticPath));
+
+  // Handle client-side routing - serve index.html for all other routes (must be last!)
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(staticPath, "index.html"));
+  });
+
+  const port = process.env.PORT || 3000;
+
+  server.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}/`);
+  });
+}
+
+startServer().catch(console.error);
