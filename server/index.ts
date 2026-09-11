@@ -3,7 +3,10 @@ import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from 'fs';
+import multer from "multer";
+import * as XLSX from "xlsx";
 
+const upload = multer({ dest: "uploads/" });
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const dataFilePath = path.join(process.cwd(), 'data.json');
@@ -49,5 +52,46 @@ async function startServer() {
     console.log(`Server running on http://localhost:${port}/`);
   });
 }
+app.post("/api/upload-excel", upload.single("file"), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded." });
+    }
 
+    const workbook = XLSX.readFile(req.file.path);
+    const vesselData = JSON.parse(fs.readFileSync(dataFilePath, "utf8"));
+
+    // Parse PanelTAGs sheet into Electrical Schedule
+    if (workbook.Sheets["PanelTAGs"]) {
+      const panelRows: any[] = XLSX.utils.sheet_to_json(workbook.Sheets["PanelTAGs"], { range: 1 });
+      vesselData.systems.electrical.schedule = panelRows
+        .filter((row: any) => row.TAG && row.Location)
+        .map((row: any) => ({
+          tag: `${row.TAG} · ${row.PANEL || "Main"}`,
+          zone: `${row.Location} (Source: ${row.Source || "N/A"})`,
+          model: `Voltage: ${row.Voltage || "TBC"} | Breaker: ${row["Amp Breaker"] || "TBC"}`,
+          count: ""
+        }));
+    }
+
+    // Parse NetWorks sheet into Ancillary Schedule
+    if (workbook.Sheets["NetWorks"]) {
+      const netRows: any[] = XLSX.utils.sheet_to_json(workbook.Sheets["NetWorks"], { range: 1 });
+      vesselData.systems.ancillary.schedule = netRows
+        .filter((row: any) => row.TAG)
+        .map((row: any) => ({
+          tag: `${row.Device || "Device"} · ${row.TAG}`,
+          zone: `Network: ${row.Network || "N/A"} | Instrument: ${row.Instrument || "Standard"}`,
+          model: "TAKEOFF IMPORT",
+          count: ""
+        }));
+    }
+
+    fs.writeFileSync(dataFilePath, JSON.stringify(vesselData, null, 2));
+    res.json({ success: true, message: "Excel takeoff successfully parsed and integrated!" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to parse Excel file." });
+  }
+});
 startServer().catch(console.error);
